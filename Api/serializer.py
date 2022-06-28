@@ -10,6 +10,22 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = EmployeeUser
         fields = ['email', 'name', 'phone_no', 'designations']
 
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeUser
+        fields = ['email','name','phone_no','designations']
+    
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
+class UserDeleteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeUser
+        fields = ['email']
+    def delete(self, instance):
+        instance.delete()
+        return
+
 class EmployeeLoginSerializer(serializers.ModelSerializer):
     email = serializers.CharField(max_length=30)
     password = serializers.CharField(max_length=30)

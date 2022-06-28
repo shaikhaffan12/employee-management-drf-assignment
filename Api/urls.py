@@ -9,4 +9,6 @@ urlpatterns = [
     path('createmanager',views.CreateManager.as_view(),name='createmanager'),
     path('forget/', views.forget_password.as_view(), name='Forget Password'),
     path('logout/', views.UserLogout.as_view(), name='User Logout'),
+    path('updateprof/',views.UpdateUserApi.as_view(),name="updateProfile"),
+    path('deleteeprof/<int:pk>',views.DeleteUserAPI.as_view(),name="deleteProfile")
 ]

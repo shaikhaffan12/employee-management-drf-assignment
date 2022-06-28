@@ -1,5 +1,8 @@
+from curses.ascii import EM
 import email
+from functools import partial
 import random
+import re
 from urllib import request, response
 from django.shortcuts import render
 from Api import serializer as ser
@@ -9,7 +12,7 @@ from Api import serializer
 from Api.models import EmployeeUser
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from rest_framework.generics import CreateAPIView, RetrieveAPIView,UpdateAPIView
+from rest_framework.generics import CreateAPIView, RetrieveAPIView,UpdateAPIView,DestroyAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate,logout
@@ -18,7 +21,9 @@ from Api.serializer import (EmployeeLoginSerializer,
                             EmployeeProfileSerializer,
                             EmployeeSerializer,
                             SuperUserSerializer,
-                            ForgetPasswordSerializer)
+                            ForgetPasswordSerializer,
+                            UserUpdateSerializer,
+                            UserDeleteSerializer)
 
 # Create your views here.
 
@@ -155,6 +160,49 @@ class UserLogin(CreateAPIView): # view for login for users who already registerd
         else:
             return Response({'status': 'login Failed'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
+class UpdateUserApi(UpdateAPIView):
+    authentication_classes = [BasicAuthentication,JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    queryset = EmployeeUser
+    serializer_class = ser.UserUpdateSerializer
+
+    def update(self,request):
+        user_manager = EmployeeUser.objects.get(email=request.user) # getUserDetail
+        manager_serializer = ser.CheckManagerSerializer(user_manager) #getUserDetail from serializer
+        is_manager = manager_serializer.data['is_manager']
+        if is_manager == True:
+            user_data = request.data
+            user_email = request.data.get('user_email') 
+            user_obj = EmployeeUser.objects.get(email=user_email)
+            serializer = ser.CheckManagerSerializer(user_obj, data = user_data, partial = True)
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response({'status': 'success', 'msg':'Update User Profile', 'profile': serializer.data}, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'error', 'msg':'Invalid User Profile'}, status=status.HTTP_400_BAD_REQUEST)  #   Bad request
+        else:
+            return Response({"status":"failed","message":"Your Not Manager So You Have Not Rights To Register Emplyoee"})
+
+
+
+class DeleteUserAPI(DestroyAPIView):
+    
+    authentication_classes = [BasicAuthentication,JWTAuthentication ]
+    permission_classes = [IsAuthenticated]
+    queryset = EmployeeUser
+    serializer_class = ser.UserDeleteSerializer
+    def destroy(self, request,pk):
+        user_manager = EmployeeUser.objects.get(email=request.user)
+        manager_serializer = ser.CheckManagerSerializer(user_manager)
+        is_manager = manager_serializer.data['is_manager']
+        if is_manager:
+            instance = self.get_object()
+            email = instance.email
+            instance.delete()
+            return Response({"status": "success", "message":"Updated User Profile","profile":email}, status=status.HTTP_200_OK)
+        else:
+            return Response({"status":"failed","message":"Your Not Manager So You Have Not Rights To Register Emplyoee"})
 
 class UserLogout(RetrieveAPIView): # view for logout existing user
     permission_classes = [IsAuthenticated]
