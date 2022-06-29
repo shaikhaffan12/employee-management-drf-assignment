@@ -17,7 +17,7 @@ class EmployeeUser (AbstractBaseUser):
     )
     name = models.CharField(max_length=40)
     designations = models.CharField(max_length=40, choices= employee_role)
-    phone_no = models.IntegerField( blank=False, null= False)
+    phone_no = models.IntegerField( max_length=20,blank=False, null= False)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_manager = models.BooleanField(default=False)
